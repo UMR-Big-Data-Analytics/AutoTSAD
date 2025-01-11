@@ -107,7 +107,7 @@ class OptunaStorageManager(ContextManager):
         if self.storage_type == OptunaStorageType.POSTGRES or dashboard:
             import docker
 
-            self._docker = docker.from_env()
+            #self._docker = docker.from_env()
         self._path: Path = tmp_path
         self._storage_ref: OptunaStorageReference = OptunaStorageReference(tmp_path, self.storage_type)
 

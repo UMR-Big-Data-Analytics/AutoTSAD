@@ -6,7 +6,7 @@ general:
   #use_timer:
   #timer_logging_level:
   #progress:
-  #n_jobs:
+  n_jobs: 10
   #seed:
   #max_algorithm_instances:
   #algorithm_selection_method:
@@ -54,7 +54,7 @@ data_gen_plotting:
   #truncated_timeseries:
   #injected_anomaly:
 optimization:
-  #optuna_storage_type:
+  optuna_storage_type: "sqlite"
   #optuna_storage_cleanup:
   #optuna_dashboard:
   #optuna_logging_level:
@@ -68,7 +68,7 @@ optimization:
   #stop_heuristic_optuna:
   #proxy_allowed_quality_deviation:
   #algorithms:
-  #disabled:
+  disabled: yes
   #init_parameter_set:
 consolidation:
   #param_selection_strategy:

@@ -110,7 +110,7 @@ def main(data: Union[np.ndarray, Dataset],
         # print(f"Expecting result in {result_file}")
         grammarviz_jar = Path(__file__).parent.resolve() / "grammarviz.jar"
         if not grammarviz_jar.exists():
-            raise RuntimeError("Could not locate grammarviz.jar!")
+            raise RuntimeError("Could not locate grammarviz.jar! : {grammarviz_jar} ")
 
         # print(f"Located grammarviz.jar at {grammarviz_jar}")
         param_dict = asdict(params)
