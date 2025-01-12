@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from nx_config import fill_config_from_path
+from nx_config_swarfield import fill_config_from_path
 
 from .config import config
 from .dataset import TestDataset

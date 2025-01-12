@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional, Any, FrozenSet, Tuple, List, Dict
 
 import numpy as np
-from nx_config import Config, ConfigSection, validate
+from nx_config_swarfield import Config, ConfigSection, validate
 from timeeval.metrics import (
     Metric,
     RangePrAUC,

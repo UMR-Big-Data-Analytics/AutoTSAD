@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
-from nx_config import add_cli_options, fill_config_from_path, resolve_config_path
-from nx_config.test_utils import update_section
+from nx_config_swarfield import add_cli_options, fill_config_from_path, resolve_config_path
+from nx_config_swarfield.test_utils import update_section
 
 from .logging import setup_logging_from_config
 from .._version import __version__
