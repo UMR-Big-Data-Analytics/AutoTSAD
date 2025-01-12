@@ -1,4 +1,4 @@
-timeeval>=1.2.10
+timeeval @ git+https://github.com/LegolizedKing/TimeEval.git@main
 timeeval-gutentag>=1.3
 numpy>=1.23,<1.24
 pandas>=2.0.0,<3.0.0
