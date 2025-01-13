@@ -22,7 +22,7 @@ def load_dependencies():
     def excluded(name):
         return any([excl in name for excl in EXCLUDES])
 
-    deps = [dep for dep in env if not excluded(dep)]
+    deps = [dep.strip() for dep in env if dep.strip() and not excluded(dep)]
     return deps
 
 
