@@ -10,7 +10,7 @@ general:
   algorithm_selection_method: aggregated-minimum-influence
   score_normalization_method: gaussian
   score_aggregation_method: custom
-  plot_final_scores: yes
+  plot_final_scores: no
   compute_all_combinations: yes
   training_timeout_s: 600
   testing_timeout_s: 14400
@@ -103,5 +103,5 @@ optimization:
     - dwt_mlead
   proxy_allowed_quality_deviation: 0.05
   reintroduce_default_params: yes
-  disabled: yes
+  disabled: true
   init_parameter_set: "timeeval"

@@ -689,7 +689,7 @@ class OptimizationSection(ConfigSection):
 
     reintroduce_default_params: bool = True
 
-    disabled: bool = False
+    disabled: bool = True
     init_parameter_set: str = "all"
 
     def metric(self) -> Metric:
