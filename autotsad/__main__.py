@@ -1,5 +1,6 @@
 import argparse
 import sys
+import multiprocessing
 from typing import List
 
 import shtab
@@ -63,4 +64,7 @@ def cli() -> None:
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    multiprocessing.set_start_method("spawn", force=True)
+    from autotsad.__main__ import main
+    main()
+

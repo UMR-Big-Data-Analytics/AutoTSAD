@@ -73,8 +73,8 @@ def setup_logging_basic(
         stop_logging()
 
 
-@contextlib.contextmanager
-def setup_logging_from_config(general: GeneralSection, optimization: OptimizationSection) -> Generator[None, None, None]:
+# @contextlib.contextmanager
+# def setup_logging_from_config(general: GeneralSection, optimization: OptimizationSection) -> Generator[None, None, None]:
     filename = str(general.result_dir() / "autotsad.log")
     config = {
         "version": 1,
@@ -118,7 +118,7 @@ def setup_logging_from_config(general: GeneralSection, optimization: Optimizatio
         stop_logging()
 
 
-def setup_logging(config: Dict[str, Any]) -> Callable[[], None]:
+# def setup_logging(config: Dict[str, Any]) -> Callable[[], None]:
     stop_event = multiprocessing.Event()
     log_listener = multiprocessing.Process(
         target=logging_listener_process,
@@ -156,6 +156,61 @@ def setup_logging(config: Dict[str, Any]) -> Callable[[], None]:
 
     return stop
 
+@contextlib.contextmanager
+def setup_logging_from_config(general: GeneralSection, optimization: OptimizationSection) -> Generator[None, None, None]:
+    filename = str(general.result_dir() / "autotsad.log")
+    config = {
+        "version": 1,
+        "disable_existing_loggers": True,
+        "formatters": {
+            "default": {
+                "class": "logging.Formatter",
+                "format": "%(asctime)s %(levelname)6.6s - %(name)20.20s: %(message)s",
+            }
+        },
+        "handlers": {
+            "file": {
+                "class": "logging.FileHandler",
+                "filename": filename,
+                "mode": "a",
+                "formatter": "default",
+            },
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "stream": sys.stdout,
+                "formatter": "default",
+            }
+        },
+        "root": {
+            "handlers": ["file", "stdout"],
+            "level": "NOTSET",
+        },
+         "loggers": {
+            "AUTOTSAD": {"level": logging.getLevelName(general.logging_level)},
+            "autotsad": {"level": logging.getLevelName(general.logging_level)},
+            "numba": {"level": "WARNING"},
+            "urllib3": {"level": "WARNING"},
+            "matplotlib": {"level": "WARNING"},
+            "optuna": {"level": logging.getLevelName(optimization.optuna_logging_level)},
+        }
+    }
+    stop_logging = setup_logging(config)
+    try:
+        yield
+    finally:
+        stop_logging()
+
+def setup_logging(config: Dict[str, Any]) -> Callable[[], None]:
+    # Initialize logging in the current process
+    logging.config.dictConfig(config)
+
+    log = logging.getLogger("root")
+    log.info("Logging started!")
+
+    def stop() -> None:
+        log.info("Stopping logging!")
+
+    return stop
 
 class MainQueueHandler(logging.Handler):
     """A simple handler for logging events received via the queue. Should only be used

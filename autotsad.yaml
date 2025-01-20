@@ -54,7 +54,7 @@ data_gen_plotting:
   #truncated_timeseries:
   #injected_anomaly:
 optimization:
-  #optuna_storage_type:
+  optuna_storage_type: "sqlite"
   #optuna_storage_cleanup:
   #optuna_dashboard:
   #optuna_logging_level:
