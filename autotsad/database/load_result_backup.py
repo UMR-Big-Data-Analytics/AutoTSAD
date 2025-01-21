@@ -78,7 +78,7 @@ def _process_config(db: Database, tmpdir: Path) -> str:
 
         print(f"  using {config_file}")
 
-        from nx_config import fill_config_from_path
+        from nx_config_swarfield import fill_config_from_path
         from autotsad.config import config
 
         fill_config_from_path(config, path=config_file)
@@ -317,7 +317,7 @@ def _process_ranking_method(selection_m: str, normalization_m: str, aggregation_
 
     print(f"    processing {selection_m}-{normalization_m}-{aggregation_m}...")
     from autotsad.config import config
-    from nx_config.test_utils import update_section
+    from nx_config_swarfield.test_utils import update_section
 
     update_section(config.general, tmp_path=tmpdir / "tmp")
     update_section(config.general, algorithm_selection_method=selection_m)

@@ -162,7 +162,7 @@ optional arguments:
 Example call:
 
 ```bash
-$ autotsad run --config-path autotsad.yaml data/timeeval/GutenTAG/ecg-diff-count-1.csv
+$ autotsad run --config-path autotsad.yaml data/autotsad-data/timeeval/GutenTAG/ecg-diff-count-1.csv
 
 AutoTSAD v0.2.2
 ------------------------
