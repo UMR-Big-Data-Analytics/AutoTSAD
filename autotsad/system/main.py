@@ -26,7 +26,7 @@ def main(args: argparse.Namespace) -> None:
     fill_config_from_path(config, path=resolve_config_path(cli_args=args), env_prefix="AUTOTSAD")
     dataset_path: Path = args.dataset
     use_gt_for_cleaning: bool = args.use_gt_for_cleaning
-    autotsad(dataset_path, use_gt_for_cleaning=use_gt_for_cleaning)
+    return autotsad(dataset_path, use_gt_for_cleaning=use_gt_for_cleaning)
 
 
 def autotsad(dataset_path: Path, testdataset: Optional[TestDataset] = None, use_gt_for_cleaning: bool = False) -> np.ndarray:
@@ -66,7 +66,7 @@ def autotsad(dataset_path: Path, testdataset: Optional[TestDataset] = None, use_
         try:
             train_collection = generate_training_data(testdataset, use_gt_for_cleaning=use_gt_for_cleaning)
             algorithm_instances = optimize_algorithms(train_collection)
-            return execute_and_rank(train_collection, algorithm_instances)
+            scoring = execute_and_rank(train_collection, algorithm_instances)
 
         finally:
             Timers.stop("autotsad")
@@ -74,3 +74,4 @@ def autotsad(dataset_path: Path, testdataset: Optional[TestDataset] = None, use_
             end_time = time.time_ns()
             duration = end_time - start_time
             print(f"AutoTSAD total time: {duration/1e9}s ({format_time_ns(duration)})")
+            return scoring
