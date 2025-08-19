@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import cycle
 from typing import Optional, Tuple, List
 
@@ -28,12 +28,12 @@ class Injection:
         Length of the anomaly to inject.
     random_state : int, optional
         Seed used by the random number generator.
-    rng : np.random.RandomState, optional
+    rng : np.random.Generator, optional
         Random number generator.
 
     Returns
     -------
-    Callable[[np.ndarray, np.ndarray, List[AnomalyAnnotation], np.ndarray], Tuple[np.ndarray, np.ndarray, Dict[int, str], np.ndarray]]
+    Callable[[np.ndarray, np.ndarray, List[AnomalyAnnotation], np.ndarray], Tuple[np.ndarray, np.ndarray, List[AnomalyAnnotation], np.ndarray]]
         Function that injects anomalies into a time series.
     """
     anomaly_types: List[str]
@@ -41,9 +41,16 @@ class Injection:
     length: int = 100
     random_state: Optional[int] = None
     rng: Optional[np.random.Generator] = None
-    anomaly_config: AnomalyGenerationSection = config.anomaly
+    # ✅ fix: create a fresh config per instance
+    anomaly_config: AnomalyGenerationSection = field(default_factory=AnomalyGenerationSection)
 
-    def __call__(self, data: np.ndarray, labels: np.ndarray, annotations: List[AnomalyAnnotation], cut_points: np.ndarray) -> InjectionResult:
+    def __call__(
+        self,
+        data: np.ndarray,
+        labels: np.ndarray,
+        annotations: List[AnomalyAnnotation],
+        cut_points: np.ndarray
+    ) -> InjectionResult:
         """Inject the anomalies into a time series.
 
         Parameters
@@ -83,7 +90,8 @@ def inject_anomalies(
     anomaly_length: int = 100,
     random_state: Optional[int] = None,
     rng: Optional[np.random.Generator] = None,
-    anomaly_config: AnomalyGenerationSection = config.anomaly
+    # ✅ safer: avoid shared mutable default in signature
+    anomaly_config: Optional[AnomalyGenerationSection] = None
 ) -> InjectionResult:
     """Inject anomalies into a time series.
 
@@ -106,10 +114,10 @@ def inject_anomalies(
         Length of the anomaly to inject.
     random_state : int, optional
         Seed used by the random number generator.
-    rng : np.random.RandomState, optional
-        Random number generator.
+    rng : np.random.Generator, optional
+        Random number generator (created via ``np.random.default_rng`` if ``None``).
     anomaly_config : AnomalyGenerationSection, optional
-        Configuration for the anomaly generation process.
+        Configuration for the anomaly generation process. If ``None``, uses ``config.anomaly``.
 
     Returns
     -------
@@ -117,20 +125,28 @@ def inject_anomalies(
         Tuple of the time series data, anomaly labels, anomaly annotations, and cut points with the anomalies
         injected.
     """
+    if anomaly_config is None:
+        anomaly_config = config.anomaly
+
     unknown_anomaly_types = set(anomaly_types) - set(ANOMALY_TYPES)
     if len(unknown_anomaly_types) > 0:
         raise ValueError(f"Unknown anomaly types: {unknown_anomaly_types}")
 
     if rng is None:
         rng = np.random.default_rng(random_state)
-    rng.shuffle(anomaly_types)
+
+    # ✅ avoid mutating the caller's list in-place
+    types_local = list(anomaly_types)
+    rng.shuffle(types_local)
     margin = anomaly_length // 4
 
-    for i, anomaly_type in zip(range(n_anomalies), cycle(anomaly_types)):
+    for i, anomaly_type in zip(range(n_anomalies), cycle(types_local)):
         # stop when we are above contamination threshold
         if np.sum(labels) / len(labels) > anomaly_config.contamination_threshold:
-            print(f"Stopping anomaly injection after {i+1} anomalies, because we are above "
-                  f"{anomaly_config.contamination_threshold:.0%} contamination.")
+            print(
+                f"Stopping anomaly injection after {i+1} anomalies, because we are above "
+                f"{anomaly_config.contamination_threshold:.0%} contamination."
+            )
             break
 
         strength = AnomalyTransform.sample_strength(anomaly_type, rng)
@@ -149,14 +165,15 @@ def inject_anomalies(
         max_tries = anomaly_config.find_position_max_retries
 
         while (
-                position + length > len(data)
-                or np.any(labels[position-margin:position + length + margin])
-                or np.any((position - margin < cut_points) & (cut_points < position + length + margin))
+            position + length > len(data)
+            or np.any(labels[max(0, position - margin):min(len(labels), position + length + margin)])
+            or np.any((position - margin < cut_points) & (cut_points < position + length + margin))
         ) and max_tries > 0:
             position_idx = rng.choice([0, 1, 2], p=anomaly_config.anomaly_section_probas)
             position_within_section = rng.integers(0, max(1, section_size - length))
             position = position_idx * section_size + position_within_section
             max_tries -= 1
+
         if max_tries == 0:
             print(f"Could not find a position for the anomaly {i+1}/{n_anomalies} of type {anomaly_type}, skipping!")
             break
@@ -167,18 +184,25 @@ def inject_anomalies(
         anom_length = len(anomaly_subsequence)
 
         if np.allclose(data[position:position + anom_length], anomaly_subsequence):
-            print(f"Anomaly {i+1}/{n_anomalies} of type {anomaly_type} at position {position} with strength "
-                  f"{strength:.2f} and length {anomaly_length} is not significant, skipping!")
+            print(
+                f"Anomaly {i+1}/{n_anomalies} of type {anomaly_type} at position {position} with strength "
+                f"{strength:.2f} and length {anomaly_length} is not significant, skipping!"
+            )
             continue
 
-        print(f"Injecting anomaly {i+1}/{n_anomalies} of type {anomaly_type} at position {position} with strength "
-              f"{strength:.2f} and length {anomaly_length}.")
+        print(
+            f"Injecting anomaly {i+1}/{n_anomalies} of type {anomaly_type} at position {position} with strength "
+            f"{strength:.2f} and length {anomaly_length}."
+        )
         data = np.r_[data[:position], anomaly_subsequence, data[position + length:]]
         labels = np.r_[labels[:position], label_subsequence, labels[position + length:]]
 
         if length != anom_length:
             # fix annotation positions
-            annotations = [a.adjust_position(anom_length - length) if a.position > position else a for a in annotations]
+            annotations = [
+                a.adjust_position(anom_length - length) if a.position > position else a
+                for a in annotations
+            ]
             # fix cut points
             cut_points[cut_points > position] += anom_length - length
 
@@ -188,12 +212,20 @@ def inject_anomalies(
             position = display_idx
             anom_length = np.sum(label_subsequence)
         else:
-            display_idx = position + anom_length//2
+            display_idx = position + anom_length // 2
             # less than by 3 off is close enough:
             assert np.abs(anomaly_length - anom_length) <= 3
             anom_length = anomaly_length
-        annotations.append(AnomalyAnnotation(position=position, length=anom_length, anomaly_type=anomaly_type,
-                                             strength=strength, display_idx=display_idx))
+
+        annotations.append(
+            AnomalyAnnotation(
+                position=position,
+                length=anom_length,
+                anomaly_type=anomaly_type,
+                strength=strength,
+                display_idx=display_idx
+            )
+        )
 
     mask = np.isnan(data)
     data = data[~mask]
