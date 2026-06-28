@@ -1,6 +1,6 @@
 timeeval @ git+https://github.com/UMR-Big-Data-Analytics/TimeEval.git@main
 timeeval-gutentag>=1.3
-numpy>=1.23,<1.24
+numpy>=1.26
 pandas>=2.0.0,<3.0.0
 scikit-learn==1.2.0
 scikit-learn-extra==0.3.0
